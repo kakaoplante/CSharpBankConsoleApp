@@ -68,10 +68,44 @@ public class Bank
         return false;
     }
 
-    public void AddAccount(string name, bool isSavingsAccount)
+    public void AddAccount(string windowsTitle)
     {
-        string newAccName = name.Trim().ToLower();
-        bool exists = AccountDB.Any(a => a.Value.Name == newAccName);
+        Console.Clear();
+        ShowAccounts(windowsTitle);
+        System.Console.WriteLine("Please enter new account name: ");
+        string? name = Console.ReadLine();
+        bool exists = true;
+        string newAccName = "";
+        bool isSavingsAccount = false;
+
+        while (exists)
+        {
+            while (string.IsNullOrWhiteSpace(name))
+            {
+                System.Console.WriteLine("Please try again:");
+                name = Console.ReadLine();
+            }
+
+            newAccName = name.Trim().ToLower();
+            exists = AccountDB.Any(a => a.Value.Name == newAccName);
+
+            if (exists)
+            {
+                System.Console.WriteLine("Account name already taken. Please try a new one.");
+                name = Console.ReadLine();
+            }
+        }
+
+        string? input;
+        do
+        {
+            System.Console.WriteLine("Is it a savings account Y/N?");
+            input = Console.ReadLine();
+        } while (input.ToLower() != "y" && input.ToLower() != "n");
+
+        isSavingsAccount = input == "y";
+        System.Console.WriteLine("Succes");
+
         if (CurrentUser != null && _isLoggedIn && exists == false)
         {
 
@@ -88,6 +122,7 @@ public class Bank
 
             AccountDB[newAcc.AccountId] = newAcc;
             CurrentUser.Accounts.Add(newAcc.AccountId);
+            SaveSettings(_filePathSettings, settings);
             SaveUsers(_filePathUserDB, UserDB);
             SaveAccounts(_filePathAccDB, AccountDB);
             Log(this, $"{CurrentUser.Username} created new account(id: {newAcc.AccountId})");
@@ -156,11 +191,11 @@ public class Bank
         }
     }
 
-    public void ShowAccounts()
+    public void ShowAccounts(string windowsTitle)
     {
         if (CurrentUser != null && _isLoggedIn)
         {
-
+            System.Console.WriteLine(windowsTitle);
             List<Account> userAccounts = AccountDB.Values
                             .Where(a => a.OwnerId == CurrentUser.UserId)
                             .ToList();
@@ -172,8 +207,18 @@ public class Bank
         }
     }
 
-    public void ShowTransHistory(int id)
+    public void ShowTransHistory(string windowsTitle)
     {
+        ShowAccounts(windowsTitle);
+        string input;
+        int id;
+        do
+        {
+            System.Console.WriteLine("Please select account id:");
+            input = Console.ReadLine().Trim();
+
+        } while (!int.TryParse(input, out id));
+        Console.Clear();
         if (CurrentUser != null && _isLoggedIn)
         {
 
@@ -196,17 +241,59 @@ public class Bank
         }
     }
 
-    public void Withdraw(decimal amount, int id, string msg)
+    public void Withdraw(string windowsTitle)
     {
         if (CurrentUser != null && _isLoggedIn)
         {
+            Console.Clear();
+            int id;
 
-            AccountDB.TryGetValue(id, out Account? currentAcc);
-            if (currentAcc != null && currentAcc.OwnerId == CurrentUser.UserId)
+            string? input;
+
+            Account? currentAcc = null;
+            string? displayMsg = null;
+            do
+            {
+                Console.Clear();
+                ShowAccounts(windowsTitle);
+                if (displayMsg != null)
+                {
+                    System.Console.WriteLine(displayMsg);
+                }
+                System.Console.WriteLine("Please enter the ID of the account to withdraw from.");
+                input = Console.ReadLine();
+                if (int.TryParse(input, out id))
+                {
+                    if (AccountDB.TryGetValue(id, out currentAcc) && currentAcc.OwnerId == CurrentUser.UserId)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        currentAcc = null;
+                        displayMsg = "No account by that id.";
+                        input = "Fail";
+                    }
+                }
+            } while (!int.TryParse(input, out id));
+
+
+            Console.Clear();
+
+            decimal amount;
+            System.Console.WriteLine($"{currentAcc.AccountId}: {currentAcc.Name}. Balance: {currentAcc.Balance}");
+            System.Console.WriteLine("Please enter the amount:");
+            input = Console.ReadLine();
+
+            if (decimal.TryParse(input, out amount))
             {
                 amount = Math.Round(amount, 2);
                 if (amount <= currentAcc.Balance)
                 {
+                    System.Console.WriteLine("Please enter a message.");
+                    string? msg = Console.ReadLine();
+                    if (string.IsNullOrEmpty(msg)) msg = "No message given.";
+
                     int accId = currentAcc.AccountId;
                     Transaction newTransaction = new Transaction()
                     {
@@ -220,52 +307,96 @@ public class Bank
                     currentAcc.Balance -= amount;
                     SaveAccounts(_filePathAccDB, AccountDB);
                     Log(this, $"{CurrentUser.Username} withdrawel");
-                    //System.Console.WriteLine($"Balance after withdrawel: {currentAcc.Balance}$");
+                    Console.Clear();
+                    ShowAccounts("SHOWING ACCOUNTS");
+
                 }
                 else
                 {
-                    System.Console.WriteLine("Not enough money");
+                    Console.Clear();
+                    ShowAccounts("SHOWING ACCOUNTS");
+                    System.Console.WriteLine("DENIAL: Not enough money");
                 }
 
             }
-            else
-            {
-                System.Console.WriteLine("No account match");
-            }
+
         }
     }
 
-    public void Deposit(decimal amount, int id, string msg)
+    public void Deposit(string windowsTitle)
     {
         if (CurrentUser != null && _isLoggedIn)
         {
+            Console.Clear();
+            int id;
 
-            AccountDB.TryGetValue(id, out Account? currentAcc);
-            if (currentAcc != null && currentAcc.OwnerId == CurrentUser.UserId)
+            string? input;
+
+            Account? currentAcc = null;
+            string? displayMsg = null;
+            do
             {
+                Console.Clear();
+                ShowAccounts(windowsTitle);
+                if (displayMsg != null)
+                {
+                    System.Console.WriteLine(displayMsg);
+                }
+                System.Console.WriteLine("Please enter the ID of the account to withdraw from.");
+                input = Console.ReadLine();
+                if (int.TryParse(input, out id))
+                {
+                    if (AccountDB.TryGetValue(id, out currentAcc) && currentAcc.OwnerId == CurrentUser.UserId)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        currentAcc = null;
+                        displayMsg = "No account by that id.";
+                        input = "Fail";
+                    }
+                }
+            } while (!int.TryParse(input, out id));
 
+
+            Console.Clear();
+
+            decimal amount;
+            System.Console.WriteLine($"{currentAcc.AccountId}: {currentAcc.Name}. Balance: {currentAcc.Balance}");
+            System.Console.WriteLine("Please enter the amount:");
+            input = Console.ReadLine();
+
+            if (decimal.TryParse(input, out amount))
+            {
                 amount = Math.Round(amount, 2);
+
+
+                System.Console.WriteLine("Please enter a message.");
+                string? msg = Console.ReadLine();
+                if (string.IsNullOrEmpty(msg)) msg = "No message given.";
+
                 int accId = currentAcc.AccountId;
                 Transaction newTransaction = new Transaction()
                 {
                     Amount = amount,
+                    fromAccId = accId,
                     Message = msg,
-                    toAccId = accId,
                     TypeOfTrans = "deposit"
                 };
 
                 currentAcc.TransactionsHistory.Add(newTransaction);
                 currentAcc.Balance += amount;
                 SaveAccounts(_filePathAccDB, AccountDB);
-                Log(this, $"{CurrentUser.Username} deposited money");
+                Log(this, $"{CurrentUser.Username} deposit");
+                Console.Clear();
+                ShowAccounts("SHOWING ACCOUNTS");
 
-                //System.Console.WriteLine($"Balance after deposit: {currentAcc.Balance}$");
+
+
 
             }
-            else
-            {
-                System.Console.WriteLine("No account match");
-            }
+
         }
     }
 

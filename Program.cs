@@ -6,6 +6,7 @@ namespace BankApp;
 class Program
 {
 
+    public delegate void CurrentRender(string windowsTitle);
 
 
     static void Main(string[] args)
@@ -23,8 +24,8 @@ class Program
         Dictionary<string, string> filePaths = new Dictionary<string, string>
         {
             ["pathSettings"] = Path.Combine(AppContext.BaseDirectory, "Settings.json"),
-            ["pathUserDB"] = Path.Combine(AppContext.BaseDirectory, "AccountDB.json"),
-            ["pathAccDB"] = Path.Combine(AppContext.BaseDirectory, "UserDB.json"),
+            ["pathAccDB"] = Path.Combine(AppContext.BaseDirectory, "AccountDB.json"),
+            ["pathUserDB"] = Path.Combine(AppContext.BaseDirectory, "UserDB.json"),
             ["pathLog"] = Path.Combine(AppContext.BaseDirectory, "log.txt")
         };
 
@@ -101,6 +102,7 @@ class Program
         Bank bank = new Bank(accDB, userDB, bankSettings, filePaths);
 
         string? displayMsg = null;
+
         //Handle authentication.
         while (!isAuthenticated)
         {
@@ -112,7 +114,7 @@ class Program
             System.Console.WriteLine("Menu:\n [1] Login. \n [2] Add new user");
             System.Console.Write("Choice: ");
             var input = Console.ReadLine();
-            switch (input)
+            switch (input.Trim())
             {
                 case "1":
                     isAuthenticated = bank.Login();
@@ -122,39 +124,64 @@ class Program
                     displayMsg = bank.AddUser();
                     Console.Clear();
                     break;
+                default:
+                    displayMsg = "Please select an option";
+                    break;
             }
         }
 
         System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
 
+        CurrentRender Render = bank.ShowAccounts;
+        string renderTitle = "--------------------SHOWING ACCOUNTS-----------------------";
+
         while (isAuthenticated)
         {
-            bank.ShowAccounts();
-            System.Console.WriteLine("Menu:\n [1] Add account. \n [2] Show account history. \n [3] Withdrawl \n [4] Deposit \n [5] Transfer");
-            System.Console.Write("Choice: ");
-            var input = Console.ReadLine();
+            Console.Clear();
+            Render(renderTitle);
+            string input = RenderMenu();
             switch (input)
             {
+                case "0":
+                    renderTitle = "--------------------SHOWING ACCOUNTS-----------------------";
+                    Render = bank.ShowAccounts;
+                    break;
                 case "1":
-
-                    //bank.AddAccount();
-                    Console.Clear();
+                    renderTitle = "----------------------ADD ACCOUNT--------------------------";
+                    Render = bank.AddAccount;
                     break;
                 case "2":
-                    int choice = int.Parse(Console.ReadLine());
-                    bank.ShowTransHistory(choice);
-                    Console.Clear();
+                    renderTitle = "---------------SHOW TRANSACTION HISTORY-------------------";
+                    Render = bank.ShowTransHistory;
                     break;
                 case "3":
+                    renderTitle = "-----------------------WITHDRAWAL--------------------------";
+                    Render = bank.Withdraw;
                     break;
                 case "4":
+                    renderTitle = "-------------------------DEPOSIT---------------------------";
+                    Render = bank.Deposit;
                     break;
                 case "5":
+                    renderTitle = "------------------------TRANSFER---------------------------";
                     break;
             }
 
 
 
+        }
+
+        string RenderMenu()
+        {
+            string? input = "";
+            while (string.IsNullOrWhiteSpace(input))
+            {
+                System.Console.WriteLine("Menu:\n [0] Show Accounts.  [1] Add account. \n[2] Show account history. [3] Withdrawl. \n[4] Deposit. [5] Transfer");
+                System.Console.WriteLine("Choice: ");
+                input = Console.ReadLine();
+            }
+
+            return input;
         }
 
 
