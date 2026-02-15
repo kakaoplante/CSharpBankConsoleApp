@@ -134,14 +134,15 @@ class Program
             }
         }
 
-        System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
+        
 
         CurrentRender Render = bank.ShowAccounts;
         string windowsTitle = "SHOWING ACCOUNTS";
         while (isAuthenticated)
         {
             Console.Clear();
-        System.Console.WriteLine(windowsTitle.Length);
+            System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
+        
             Render(windowsTitle);
             string input = RenderMenu();
             switch (input)
