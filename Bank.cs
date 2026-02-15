@@ -31,15 +31,22 @@ public class Bank
 
     }
 
-    public void Log(object sender, string msg)
-    {
-        DateTime now = DateTime.Now;
-        string message = $"{now}: from {sender}. Msg:{msg}. \n";
-        File.AppendAllText(_filePathLog, message);
-    }
+    
 
+    private void renderWindowsTitle(string title) {
+        int windowsTitleLength = 58;
+        int inputTitleLenght = title.Length;
+        string seperatorString = "----------------------------------------";
+        int minusTitleLength = windowsTitleLength-inputTitleLenght;
+        int startSeperatorLength = (int)Math.Floor(minusTitleLength/2.00);
+        int endSeperatorLength = (int)Math.Ceiling(minusTitleLength/2.00);
+        string windowsTitleRendered = $"{seperatorString[..startSeperatorLength]}{title}{seperatorString[..endSeperatorLength]}";
+        System.Console.WriteLine(windowsTitleRendered);
+    }
     public bool Login()
     {
+        Console.Clear();
+        renderWindowsTitle("Login Screen");
         System.Console.Write("Username: ");
         string? username = Console.ReadLine().Trim().ToLower();
 
@@ -66,69 +73,6 @@ public class Bank
         }
         System.Console.WriteLine("No such user");
         return false;
-    }
-
-    public void AddAccount(string windowsTitle)
-    {
-        Console.Clear();
-        ShowAccounts(windowsTitle);
-        System.Console.WriteLine("Please enter new account name: ");
-        string? name = Console.ReadLine();
-        bool exists = true;
-        string newAccName = "";
-        bool isSavingsAccount = false;
-
-        while (exists)
-        {
-            while (string.IsNullOrWhiteSpace(name))
-            {
-                System.Console.WriteLine("Please try again:");
-                name = Console.ReadLine();
-            }
-
-            newAccName = name.Trim().ToLower();
-            exists = AccountDB.Any(a => a.Value.Name == newAccName);
-
-            if (exists)
-            {
-                System.Console.WriteLine("Account name already taken. Please try a new one.");
-                name = Console.ReadLine();
-            }
-        }
-
-        string? input;
-        do
-        {
-            System.Console.WriteLine("Is it a savings account Y/N?");
-            input = Console.ReadLine();
-        } while (input.ToLower() != "y" && input.ToLower() != "n");
-
-        isSavingsAccount = input == "y";
-        System.Console.WriteLine("Succes");
-
-        if (CurrentUser != null && _isLoggedIn && exists == false)
-        {
-
-            Account newAcc = new Account()
-            {
-                Name = newAccName,
-                Balance = 0,
-                TransactionsHistory = [],
-                SavingsAccount = isSavingsAccount,
-                Rate = isSavingsAccount ? 0.75m : 0.5m,
-                AccountId = settings["nextAccId"]++,
-                OwnerId = CurrentUser.UserId
-            };
-
-            AccountDB[newAcc.AccountId] = newAcc;
-            CurrentUser.Accounts.Add(newAcc.AccountId);
-            SaveSettings(_filePathSettings, settings);
-            SaveUsers(_filePathUserDB, UserDB);
-            SaveAccounts(_filePathAccDB, AccountDB);
-            Log(this, $"{CurrentUser.Username} created new account(id: {newAcc.AccountId})");
-
-        }
-
     }
 
     public string AddUser()
@@ -195,16 +139,95 @@ public class Bank
     {
         if (CurrentUser != null && _isLoggedIn)
         {
-            System.Console.WriteLine(windowsTitle);
+            // Overly complicated way to render a table instead of using built-in features.
+            // Done just for practice.
+
+            
+            string idString = "ID    ";
+            string nameString = "Name               ";
+            string rateString = "Rate  ";
+            string balanceString = "                Balance";
+            string whitespaceString = "                                     ";
+            renderWindowsTitle(windowsTitle);
+            System.Console.WriteLine($"{idString}|{nameString}|{rateString}|{balanceString}|");
             List<Account> userAccounts = AccountDB.Values
                             .Where(a => a.OwnerId == CurrentUser.UserId)
                             .ToList();
 
             foreach (Account acc in userAccounts)
             {
-                System.Console.WriteLine($"Id: {acc.AccountId}, Name: {acc.Name}. Type:{acc.Rate}. Balance:{acc.Balance}");
+                string accNameStringFormated = acc.Name.Length > 12 ? $"{acc.Name[0..12]}..." : acc.Name ;
+                System.Console.WriteLine($"{acc.AccountId}{whitespaceString[..(idString.Length - acc.AccountId.ToString().Length)]}┆" + 
+                                        $"{accNameStringFormated}{whitespaceString[..(nameString.Length - accNameStringFormated.Length)]}┆"+ 
+                                        $"{acc.Rate}{whitespaceString[..(rateString.Length - acc.Rate.ToString().Length)]}┆"+
+                                        $"{whitespaceString[..(balanceString.Length - acc.Balance.ToString().Length)]}{acc.Balance}┆");
             }
         }
+    }
+
+    public void AddAccount(string windowsTitle)
+    {
+        Console.Clear();
+        ShowAccounts(windowsTitle);
+        System.Console.WriteLine("Please enter new account name: ");
+        string? name = Console.ReadLine();
+        bool exists = true;
+        string newAccName = "";
+        bool isSavingsAccount = false;
+
+        while (exists)
+        {
+            while (string.IsNullOrWhiteSpace(name))
+            {
+                System.Console.WriteLine("Please try again:");
+                name = Console.ReadLine();
+            }
+
+            newAccName = name.Trim().ToLower();
+            exists = AccountDB.Any(a => a.Value.Name == newAccName);
+
+            if (exists)
+            {
+                System.Console.WriteLine("Account name already taken. Please try a new one.");
+                name = Console.ReadLine();
+            }
+        }
+
+        string? input;
+        do
+        {
+            System.Console.WriteLine("Is it a savings account Y/N?");
+            input = Console.ReadLine();
+        } while (input.ToLower() != "y" && input.ToLower() != "n");
+
+        isSavingsAccount = input == "y";
+        System.Console.WriteLine("Succes");
+
+        if (CurrentUser != null && _isLoggedIn && exists == false)
+        {
+
+            Account newAcc = new Account()
+            {
+                Name = newAccName,
+                Balance = 0,
+                TransactionsHistory = [],
+                SavingsAccount = isSavingsAccount,
+                Rate = isSavingsAccount ? 0.75m : 0.5m,
+                AccountId = settings["nextAccId"]++,
+                OwnerId = CurrentUser.UserId
+            };
+
+            AccountDB[newAcc.AccountId] = newAcc;
+            CurrentUser.Accounts.Add(newAcc.AccountId);
+            SaveSettings(_filePathSettings, settings);
+            SaveUsers(_filePathUserDB, UserDB);
+            SaveAccounts(_filePathAccDB, AccountDB);
+            Log(this, $"{CurrentUser.Username} created new account(id: {newAcc.AccountId})");
+
+        }
+        Console.Clear();
+        ShowAccounts("ACCOUNT ADDED");
+
     }
 
     public void ShowTransHistory(string windowsTitle)
@@ -225,8 +248,8 @@ public class Bank
             AccountDB.TryGetValue(id, out Account? currentAcc);
             if (currentAcc != null && currentAcc.OwnerId == CurrentUser.UserId)
             {
-                System.Console.WriteLine("");
-                System.Console.WriteLine($"Showing transferhistory of account {currentAcc.AccountId}:");
+                renderWindowsTitle(windowsTitle);
+                System.Console.WriteLine($"Showing transfaction history of account {currentAcc.AccountId}:");
                 foreach (var item in currentAcc.TransactionsHistory)
                 {
                     System.Console.WriteLine($"Message: {item.Message}. {item.TypeOfTrans}: {item.Amount}$");
@@ -485,6 +508,13 @@ public class Bank
         });
 
         File.WriteAllText(filePath, json);
+    }
+
+    public void Log(object sender, string msg)
+    {
+        DateTime now = DateTime.Now;
+        string message = $"{now}: from {sender}. Msg:{msg}. \n";
+        File.AppendAllText(_filePathLog, message);
     }
 }
 

@@ -15,8 +15,11 @@ class Program
         //TODO
         // 1. Creating Bank class migrate methods to this class. CHECK
         // 1. Save to file (Settings)(UserDB)(AccountDB) CHECK
-        // 2. Add event listeners logging transaction and alarming big transaction
-        // 3. adding user interface
+        // 2. Add event listeners logging transaction(Done) and alarming big transaction
+        // 3. adding user interface - Nearly done.(Missing transaction history)
+        // 4. Fixing transaction function
+        // 5. Create Datetime fuinction for transactions
+        // 6. Adding documentation and cleaning up - ongoing
 
         //Creating settings
 
@@ -97,7 +100,7 @@ class Program
             File.WriteAllText(filePaths["pathLog"], "");
         }
 
-
+        
         bool isAuthenticated = false;
         Bank bank = new Bank(accDB, userDB, bankSettings, filePaths);
 
@@ -106,6 +109,7 @@ class Program
         //Handle authentication.
         while (!isAuthenticated)
         {
+            System.Console.Clear();
             if (displayMsg != null)
             {
                 System.Console.WriteLine(displayMsg);
@@ -133,37 +137,37 @@ class Program
         System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
 
         CurrentRender Render = bank.ShowAccounts;
-        string renderTitle = "--------------------SHOWING ACCOUNTS-----------------------";
-
+        string windowsTitle = "SHOWING ACCOUNTS";
         while (isAuthenticated)
         {
             Console.Clear();
-            Render(renderTitle);
+        System.Console.WriteLine(windowsTitle.Length);
+            Render(windowsTitle);
             string input = RenderMenu();
             switch (input)
             {
                 case "0":
-                    renderTitle = "--------------------SHOWING ACCOUNTS-----------------------";
+                    windowsTitle = "SHOWING ACCOUNTS";
                     Render = bank.ShowAccounts;
                     break;
                 case "1":
-                    renderTitle = "----------------------ADD ACCOUNT--------------------------";
+                    windowsTitle = "ADD ACCOUNT";
                     Render = bank.AddAccount;
                     break;
                 case "2":
-                    renderTitle = "---------------SHOW TRANSACTION HISTORY-------------------";
+                    windowsTitle = "SHOW TRANSACTION HISTORY";
                     Render = bank.ShowTransHistory;
                     break;
                 case "3":
-                    renderTitle = "-----------------------WITHDRAWAL--------------------------";
+                    windowsTitle = "WITHDRAWAL";
                     Render = bank.Withdraw;
                     break;
                 case "4":
-                    renderTitle = "-------------------------DEPOSIT---------------------------";
+                    windowsTitle = "DEPOSIT";
                     Render = bank.Deposit;
                     break;
                 case "5":
-                    renderTitle = "------------------------TRANSFER---------------------------";
+                    windowsTitle = "TRANSFER";
                     break;
             }
 
@@ -176,7 +180,7 @@ class Program
             string? input = "";
             while (string.IsNullOrWhiteSpace(input))
             {
-                System.Console.WriteLine("Menu:\n [0] Show Accounts.  [1] Add account. \n[2] Show account history. [3] Withdrawl. \n[4] Deposit. [5] Transfer");
+                System.Console.WriteLine("Menu:\n[0] Show Accounts.  [1] Add account. \n[2] Show account history. [3] Withdrawl. \n[4] Deposit. [5] Transfer");
                 System.Console.WriteLine("Choice: ");
                 input = Console.ReadLine();
             }
