@@ -13,4 +13,6 @@ public class Transaction
     public string? Message { get; set; }
     public string? TypeOfTrans { get; set; }
 
+    public DateTime? TimeOfTransaction { get; set; }
+
 }

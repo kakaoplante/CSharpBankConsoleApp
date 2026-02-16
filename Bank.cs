@@ -31,15 +31,14 @@ public class Bank
 
     }
 
-    
-
-    private void renderWindowsTitle(string title) {
+    private void renderWindowsTitle(string title)
+    {
         int windowsTitleLength = 58;
         int inputTitleLenght = title.Length;
         string seperatorString = "----------------------------------------";
-        int minusTitleLength = windowsTitleLength-inputTitleLenght;
-        int startSeperatorLength = (int)Math.Floor(minusTitleLength/2.00);
-        int endSeperatorLength = (int)Math.Ceiling(minusTitleLength/2.00);
+        int minusTitleLength = windowsTitleLength - inputTitleLenght;
+        int startSeperatorLength = (int)Math.Floor(minusTitleLength / 2.00);
+        int endSeperatorLength = (int)Math.Ceiling(minusTitleLength / 2.00);
         string windowsTitleRendered = $"{seperatorString[..startSeperatorLength]}{title}{seperatorString[..endSeperatorLength]}";
         System.Console.WriteLine(windowsTitleRendered);
     }
@@ -142,7 +141,7 @@ public class Bank
             // Overly complicated way to render a table instead of using built-in features.
             // Done just for practice.
 
-            
+
             string idString = "ID    ";
             string nameString = "Name               ";
             string rateString = "Rate  ";
@@ -153,14 +152,23 @@ public class Bank
             List<Account> userAccounts = AccountDB.Values
                             .Where(a => a.OwnerId == CurrentUser.UserId)
                             .ToList();
-
-            foreach (Account acc in userAccounts)
+            if (userAccounts.Count <= 0)
             {
-                string accNameStringFormated = acc.Name.Length > 12 ? $"{acc.Name[0..12]}..." : acc.Name ;
-                System.Console.WriteLine($"{acc.AccountId}{whitespaceString[..(idString.Length - acc.AccountId.ToString().Length)]}┆" + 
-                                        $"{accNameStringFormated}{whitespaceString[..(nameString.Length - accNameStringFormated.Length)]}┆"+ 
-                                        $"{acc.Rate}{whitespaceString[..(rateString.Length - acc.Rate.ToString().Length)]}┆"+
-                                        $"{whitespaceString[..(balanceString.Length - acc.Balance.ToString().Length)]}{acc.Balance}┆");
+                System.Console.WriteLine("");
+                renderWindowsTitle("| No accounts to show |");
+                System.Console.WriteLine("");
+            }
+            else
+            {
+
+                foreach (Account acc in userAccounts)
+                {
+                    string accNameStringFormated = acc.Name.Length > 12 ? $"{acc.Name[0..12]}..." : acc.Name;
+                    System.Console.WriteLine($"{acc.AccountId}{whitespaceString[..(idString.Length - acc.AccountId.ToString().Length)]}┆" +
+                                            $"{accNameStringFormated}{whitespaceString[..(nameString.Length - accNameStringFormated.Length)]}┆" +
+                                            $"{acc.Rate}{whitespaceString[..(rateString.Length - acc.Rate.ToString().Length)]}┆" +
+                                            $"{whitespaceString[..(balanceString.Length - acc.Balance.ToString().Length)]}{acc.Balance}┆");
+                }
             }
         }
     }
@@ -308,7 +316,7 @@ public class Bank
             System.Console.WriteLine("Please enter the amount:");
             input = Console.ReadLine();
 
-            if (decimal.TryParse(input, out amount))
+            if (decimal.TryParse(input, out amount) && amount > 0)
             {
                 amount = Math.Round(amount, 2);
                 if (amount <= currentAcc.Balance)
@@ -323,7 +331,8 @@ public class Bank
                         Amount = amount,
                         fromAccId = accId,
                         Message = msg,
-                        TypeOfTrans = "withdrawel"
+                        TypeOfTrans = "withdrawel",
+                        TimeOfTransaction = DateTime.Now,
                     };
 
                     currentAcc.TransactionsHistory.Add(newTransaction);
@@ -341,6 +350,10 @@ public class Bank
                     System.Console.WriteLine("DENIAL: Not enough money");
                 }
 
+            }
+            else
+            {
+                ShowAccounts("No withdrawal made");
             }
 
         }
@@ -390,7 +403,7 @@ public class Bank
             System.Console.WriteLine("Please enter the amount:");
             input = Console.ReadLine();
 
-            if (decimal.TryParse(input, out amount))
+            if (decimal.TryParse(input, out amount) && amount > 0)
             {
                 amount = Math.Round(amount, 2);
 
@@ -405,7 +418,8 @@ public class Bank
                     Amount = amount,
                     fromAccId = accId,
                     Message = msg,
-                    TypeOfTrans = "deposit"
+                    TypeOfTrans = "deposit",
+                    TimeOfTransaction = DateTime.Now,
                 };
 
                 currentAcc.TransactionsHistory.Add(newTransaction);
@@ -414,66 +428,135 @@ public class Bank
                 Log(this, $"{CurrentUser.Username} deposit");
                 Console.Clear();
                 ShowAccounts("SHOWING ACCOUNTS");
-
-
-
-
+            }
+            else
+            {
+                ShowAccounts("NO DEPOSITE MADE");
             }
 
         }
     }
 
-    public void Transfer(decimal amount, int currentAccId, int recieverAccId, string msgToSelf, string msgToReciever)
+    public void Transfer(string windowsTitle)
     {
         if (CurrentUser != null && _isLoggedIn)
         {
+            Console.Clear();
+            int id;
 
-            AccountDB.TryGetValue(currentAccId, out Account? currentAcc);
+            string? input;
 
-            AccountDB.TryGetValue(recieverAccId, out Account? recieverAcc);
-
-            if (currentAcc != null && currentAcc.OwnerId == CurrentUser.UserId && recieverAcc != null)
+            Account? currentAcc = null;
+            string? displayMsg = null;
+            do
             {
-                amount = Math.Round(amount, 2);
-                if (amount < currentAcc.Balance)
+                Console.Clear();
+                ShowAccounts(windowsTitle);
+                if (displayMsg != null)
+                {
+                    System.Console.WriteLine(displayMsg);
+                }
+                System.Console.WriteLine("Please enter the ID of the account to transfer from.");
+                input = Console.ReadLine();
+                if (int.TryParse(input, out id))
+                {
+                    if (AccountDB.TryGetValue(id, out currentAcc) && currentAcc.OwnerId == CurrentUser.UserId)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        currentAcc = null;
+                        displayMsg = "No account by that id.";
+                        input = "Fail";
+                    }
+                }
+            } while (!int.TryParse(input, out id));
+
+            Account? recieverAcc = null;
+            do
+            {
+                if (displayMsg != null)
+                {
+                    System.Console.WriteLine(displayMsg);
+                }
+                System.Console.WriteLine("Please enter the ID of the account to transfer to.");
+                input = Console.ReadLine();
+                if (int.TryParse(input, out id))
+                {
+                    if (AccountDB.TryGetValue(id, out recieverAcc))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        currentAcc = null;
+                        displayMsg = "No account by that id.";
+                        input = "Fail";
+                    }
+                }
+            } while (!int.TryParse(input, out id));
+
+
+            Console.Clear();
+
+            decimal amount;
+            System.Console.WriteLine($"{currentAcc.AccountId}: {currentAcc.Name}. Balance: {currentAcc.Balance}");
+            System.Console.WriteLine("Please enter the amount:");
+            input = Console.ReadLine();
+
+            if (decimal.TryParse(input, out amount))
+
+                if (currentAcc != null && currentAcc.OwnerId == CurrentUser.UserId && recieverAcc != null)
                 {
 
-                    Transaction currentUserTransaction = new Transaction()
+
+                    amount = Math.Round(amount, 2);
+                    if (amount < currentAcc.Balance && amount > 0)
                     {
-                        Amount = -1 * amount,
-                        fromAccId = currentAcc.AccountId,
-                        toAccId = recieverAcc.AccountId,
-                        Message = msgToSelf,
-                        TypeOfTrans = "transfer"
-                    };
+                        System.Console.WriteLine("Please enter message to self:");
+                        string? msgToSelf = Console.ReadLine();
+                        System.Console.WriteLine("Please enter message to self:");
+                        string? msgToReciever = Console.ReadLine();
 
-                    Transaction recieverTransaction = new Transaction()
+                        Transaction currentUserTransaction = new Transaction()
+                        {
+                            Amount = -1 * amount,
+                            fromAccId = currentAcc.AccountId,
+                            toAccId = recieverAcc.AccountId,
+                            Message = msgToSelf,
+                            TypeOfTrans = "transfer",
+                            TimeOfTransaction = DateTime.Now,
+                        };
+
+                        Transaction recieverTransaction = new Transaction()
+                        {
+                            Amount = amount,
+                            fromAccId = currentAcc.AccountId,
+                            toAccId = recieverAcc.AccountId,
+                            Message = msgToReciever,
+                            TypeOfTrans = "transfer",
+                            TimeOfTransaction = DateTime.Now,
+                        };
+                        currentAcc.TransactionsHistory.Add(currentUserTransaction);
+                        recieverAcc.TransactionsHistory.Add(recieverTransaction);
+                        currentAcc.Balance -= amount;
+                        recieverAcc.Balance += amount;
+                        SaveAccounts(_filePathAccDB, AccountDB);
+                        Log(this, $"{CurrentUser.Username} new transfer");
+
+                        System.Console.WriteLine($"Balance after transfer: {currentAcc.Balance}$");
+
+                    }
+                    else
                     {
-                        Amount = amount,
-                        fromAccId = currentAcc.AccountId,
-                        toAccId = recieverAcc.AccountId,
-                        Message = msgToReciever,
-                        TypeOfTrans = "transfer"
-                    };
-                    currentAcc.TransactionsHistory.Add(currentUserTransaction);
-                    recieverAcc.TransactionsHistory.Add(recieverTransaction);
-                    currentAcc.Balance -= amount;
-                    recieverAcc.Balance += amount;
-                    SaveAccounts(_filePathAccDB, AccountDB);
-                    Log(this, $"{CurrentUser.Username} new transfer");
-
-                    System.Console.WriteLine($"Balance after transfer: {currentAcc.Balance}$");
-
+                        System.Console.WriteLine("Not enough money for transfer");
+                    }
                 }
                 else
                 {
-                    System.Console.WriteLine("Not enough money for transfer");
+                    System.Console.WriteLine("No account match");
                 }
-            }
-            else
-            {
-                System.Console.WriteLine("No account match");
-            }
 
         }
     }
@@ -515,6 +598,14 @@ public class Bank
         DateTime now = DateTime.Now;
         string message = $"{now}: from {sender}. Msg:{msg}. \n";
         File.AppendAllText(_filePathLog, message);
+    }
+
+    public bool logout()
+    {
+        CurrentUser = null;
+        _isLoggedIn = false;
+
+        return false;
     }
 }
 

@@ -100,80 +100,86 @@ class Program
             File.WriteAllText(filePaths["pathLog"], "");
         }
 
-        
+
         bool isAuthenticated = false;
         Bank bank = new Bank(accDB, userDB, bankSettings, filePaths);
 
         string? displayMsg = null;
-
-        //Handle authentication.
-        while (!isAuthenticated)
+        while (true)
         {
-            System.Console.Clear();
-            if (displayMsg != null)
+            //Handle authentication.
+            while (!isAuthenticated)
             {
-                System.Console.WriteLine(displayMsg);
-            }
+                System.Console.Clear();
+                if (displayMsg != null)
+                {
+                    System.Console.WriteLine(displayMsg);
+                }
 
-            System.Console.WriteLine("Menu:\n [1] Login. \n [2] Add new user");
-            System.Console.Write("Choice: ");
-            var input = Console.ReadLine();
-            switch (input.Trim())
-            {
-                case "1":
-                    isAuthenticated = bank.Login();
-                    Console.Clear();
-                    break;
-                case "2":
-                    displayMsg = bank.AddUser();
-                    Console.Clear();
-                    break;
-                default:
-                    displayMsg = "Please select an option";
-                    break;
-            }
-        }
-
-        
-
-        CurrentRender Render = bank.ShowAccounts;
-        string windowsTitle = "SHOWING ACCOUNTS";
-        while (isAuthenticated)
-        {
-            Console.Clear();
-            System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
-        
-            Render(windowsTitle);
-            string input = RenderMenu();
-            switch (input)
-            {
-                case "0":
-                    windowsTitle = "SHOWING ACCOUNTS";
-                    Render = bank.ShowAccounts;
-                    break;
-                case "1":
-                    windowsTitle = "ADD ACCOUNT";
-                    Render = bank.AddAccount;
-                    break;
-                case "2":
-                    windowsTitle = "SHOW TRANSACTION HISTORY";
-                    Render = bank.ShowTransHistory;
-                    break;
-                case "3":
-                    windowsTitle = "WITHDRAWAL";
-                    Render = bank.Withdraw;
-                    break;
-                case "4":
-                    windowsTitle = "DEPOSIT";
-                    Render = bank.Deposit;
-                    break;
-                case "5":
-                    windowsTitle = "TRANSFER";
-                    break;
+                System.Console.WriteLine("Menu:\n [1] Login. \n [2] Add new user");
+                System.Console.Write("Choice: ");
+                var input = Console.ReadLine();
+                switch (input.Trim())
+                {
+                    case "1":
+                        isAuthenticated = bank.Login();
+                        Console.Clear();
+                        break;
+                    case "2":
+                        displayMsg = bank.AddUser();
+                        Console.Clear();
+                        break;
+                    default:
+                        displayMsg = "Please select an option";
+                        break;
+                }
             }
 
 
 
+            CurrentRender Render = bank.ShowAccounts;
+            string windowsTitle = "SHOWING ACCOUNTS";
+            while (isAuthenticated)
+            {
+                Console.Clear();
+                System.Console.WriteLine("Current user logged in: " + bank.CurrentUser.Username);
+
+                Render(windowsTitle);
+                string input = RenderMenu();
+                switch (input)
+                {
+                    case "0":
+                        windowsTitle = "SHOWING ACCOUNTS";
+                        Render = bank.ShowAccounts;
+                        break;
+                    case "1":
+                        windowsTitle = "ADD ACCOUNT";
+                        Render = bank.AddAccount;
+                        break;
+                    case "2":
+                        windowsTitle = "SHOW TRANSACTION HISTORY";
+                        Render = bank.ShowTransHistory;
+                        break;
+                    case "3":
+                        windowsTitle = "WITHDRAWAL";
+                        Render = bank.Withdraw;
+                        break;
+                    case "4":
+                        windowsTitle = "DEPOSIT";
+                        Render = bank.Deposit;
+                        break;
+                    case "5":
+                        windowsTitle = "TRANSFER";
+                        Render = bank.Transfer;
+                        break;
+                    case "6":
+                        isAuthenticated = bank.logout();
+                        break;
+                }
+
+
+
+            }
         }
 
         string RenderMenu()
@@ -181,7 +187,7 @@ class Program
             string? input = "";
             while (string.IsNullOrWhiteSpace(input))
             {
-                System.Console.WriteLine("Menu:\n[0] Show Accounts.  [1] Add account. \n[2] Show account history. [3] Withdrawl. \n[4] Deposit. [5] Transfer");
+                System.Console.WriteLine("Menu:\n[0] Show Accounts.  [1] Add account. \n[2] Show account history. [3] Withdrawal. \n[4] Deposit. [5] Transfer\n[6] Log out.");
                 System.Console.WriteLine("Choice: ");
                 input = Console.ReadLine();
             }
